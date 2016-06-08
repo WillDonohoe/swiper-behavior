@@ -313,14 +313,9 @@
      */
     __setHandCursor: function(swiper, grabbing) {
       if (grabbing) {
-        Array.prototype.forEach.call(swiper.slides, function(s) {
-          s.style.cursor = '-webkit-grabbing';
-          s.style.cursor = '-moz-grabbing';
-        });
+        Polymer.dom(swiper.container).node[0].classList.add('dragging');
       } else {
-        Array.prototype.forEach.call(swiper.slides, function(s) {
-          s.style.cursor = '';
-        });
+        Polymer.dom(swiper.container).node[0].classList.remove('dragging');
       }
     }
   };
