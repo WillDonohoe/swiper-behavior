@@ -103,12 +103,34 @@
       swiperOpts: {
         type: Object,
         value: {}
+      },
+
+      /** Show the grabbing hand cursor when dragging the carousel. */
+      enableGrabCursor: {
+        type: Boolean,
+        value: false,
+        reflectToAttribute: true,
+        observer: '__setGrabCursorEvents'
       }
     },
 
     observers: [
       '_swiperOptsChanged(swiperOpts.*)'
     ],
+
+    /**
+     * The touch start method, bound to this scope.
+     * 
+     * @private {Function}
+     */
+    __touchStartHandler: null,
+
+    /**
+     * The touch end method, bound to this scope.
+     * 
+     * @private {Function}
+     */
+    __touchEndHandler: null,
 
     /**
      * Gets the updated properties, and forces the update of the carousel.
@@ -232,6 +254,8 @@
     attached: function() {
       this.async(function() {
         this.initSwiper();
+
+        this.__setGrabCursorEvents(this.enableGrabCursor);
       });
     },
 
@@ -240,9 +264,63 @@
      */
     detached: function() {
       if (this.swiper) {
+        if (this.enableGrabCursor) {
+          this.__setGrabCursorEvents(false);
+        }
         this.swiper.detachEvents();
         this.swiper.destroy(true, true);
         this.swiper = null;
+      }
+    },
+
+    __setGrabCursorEvents: function(enableGrabCursor) {
+      if (enableGrabCursor && this.swiper) {
+        this.__touchStartHandler = this.__onTouchStart.bind(this);
+        this.__touchEndHandler = this.__onTouchEnd.bind(this);
+
+        this.swiper.on('TouchStart', this.__touchStartHandler);
+        this.swiper.on('TouchEnd', this.__touchEndHandler);
+      } else if (!enableGrabCursor && this.swiper) {
+        this.swiper.off('TouchStart', this.__touchStartHandler);
+        this.swiper.off('TouchEnd', this.__touchEndHandler);
+      }
+    },
+
+    /**
+     * The touch start method, set the hand cursor.
+     * @param {Object} swiper The current swiper component.
+     * @private
+     */
+    __onTouchStart: function(swiper) {
+      this.__setHandCursor(swiper, true);
+    },
+
+    /**
+     * The touch end method, remove the hand cursor.
+     * @param {Object} swiper The current swiper component.
+     * @private
+     */
+    __onTouchEnd: function(swiper) {
+      this.__setHandCursor(swiper, false);
+    },
+
+    /**
+     * If grabbing is truthy, change the cursor to the grabbing symbol.
+     *
+     * @param {Object} swiper The swiper component in question.
+     * @param {Boolean} grabbing
+     * @private
+     */
+    __setHandCursor: function(swiper, grabbing) {
+      if (grabbing) {
+        Array.prototype.forEach.call(swiper.slides, function(s) {
+          s.style.cursor = '-webkit-grabbing';
+          s.style.cursor = '-moz-grabbing';
+        });
+      } else {
+        Array.prototype.forEach.call(swiper.slides, function(s) {
+          s.style.cursor = '';
+        });
       }
     }
   };
